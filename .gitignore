@@ -144,3 +144,8 @@ coverage/
 smiles.txt
 config_local.yml
 devtools/seldon-output-*/
+
+zinc_stock.hdf5
+*.hdf5
+*.onnx
+uspto_
