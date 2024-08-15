@@ -51,7 +51,8 @@ def _do_clustering(
         kwargs = {"distances_model": "lstm", "model_path": model_path}
     else:
         kwargs = {"distances_model": "ted"}
-    results["cluster_labels"] = finder.routes.cluster(n_clusters=0, **kwargs)  # type: ignore
+    results["cluster_labels"] = finder.routes.cluster(n_clusters=0,
+                                                      **kwargs)  # type: ignore
     if not detailed_results:
         return
 
@@ -59,9 +60,8 @@ def _do_clustering(
     results["distance_matrix"] = finder.routes.distance_matrix().tolist()
 
 
-def _do_post_processing(
-    finder: AiZynthFinder, results: StrDict, jobs: List[_PostProcessingJob]
-) -> None:
+def _do_post_processing(finder: AiZynthFinder, results: StrDict,
+                        jobs: List[_PostProcessingJob]) -> None:
     for job in jobs:
         results.update(job(finder))
 
@@ -71,26 +71,28 @@ def _get_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--smiles",
         required=True,
-        help="the target molecule smiles or the path of a file containing the smiles",
+        help=
+        "the target molecule smiles or the path of a file containing the smiles",
     )
-    parser.add_argument(
-        "--config", required=True, help="the filename of a configuration file"
-    )
+    parser.add_argument("--config",
+                        required=True,
+                        help="the filename of a configuration file")
     parser.add_argument(
         "--policy",
         nargs="+",
         default=[],
         help="the name of the expansion policy to use",
     )
-    parser.add_argument(
-        "--filter", nargs="+", default=[], help="the name of the filter to use"
-    )
-    parser.add_argument(
-        "--stocks", nargs="+", default=[], help="the name of the stocks to use"
-    )
-    parser.add_argument(
-        "--output", help="the name of the output file (JSON or HDF5 file)"
-    )
+    parser.add_argument("--filter",
+                        nargs="+",
+                        default=[],
+                        help="the name of the filter to use")
+    parser.add_argument("--stocks",
+                        nargs="+",
+                        default=[],
+                        help="the name of the stocks to use")
+    parser.add_argument("--output",
+                        help="the name of the output file (JSON or HDF5 file)")
     parser.add_argument(
         "--log_to_file",
         action="store_true",
@@ -110,16 +112,16 @@ def _get_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--route_distance_model",
-        help="if provided, calculate route distances for clustering with this ML model",
+        help=
+        "if provided, calculate route distances for clustering with this ML model",
     )
     parser.add_argument(
         "--post_processing",
         nargs="+",
         help="a number of modules that performs post-processing tasks",
     )
-    parser.add_argument(
-        "--pre_processing", help="a module that perform pre-processing tasks"
-    )
+    parser.add_argument("--pre_processing",
+                        help="a module that perform pre-processing tasks")
     parser.add_argument(
         "--checkpoint",
         required=False,
@@ -128,7 +130,8 @@ def _get_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _load_postprocessing_jobs(modules: Optional[List[str]]) -> List[_PostProcessingJob]:
+def _load_postprocessing_jobs(
+        modules: Optional[List[str]]) -> List[_PostProcessingJob]:
     jobs: List[_PostProcessingJob] = []
     for module_name in modules or []:
         try:
@@ -142,7 +145,8 @@ def _load_postprocessing_jobs(modules: Optional[List[str]]) -> List[_PostProcess
     return jobs
 
 
-def _load_preprocessing_job(module_name: Optional[str]) -> Optional[_PreProcessingJob]:
+def _load_preprocessing_job(
+        module_name: Optional[str]) -> Optional[_PreProcessingJob]:
     if not module_name:
         return None
 
@@ -170,9 +174,7 @@ def _select_stocks(finder: AiZynthFinder, args: argparse.Namespace) -> None:
     finder.stock.select(stocks or finder.stock.items)
 
 
-def _load_checkpoint(
-    checkpoint: str,
-) -> Dict[str, List[Any]]:
+def _load_checkpoint(checkpoint: str, ) -> Dict[str, List[Any]]:
     if not os.path.exists(checkpoint):
         return defaultdict(list)
     with open(checkpoint) as json_file:
@@ -213,7 +215,8 @@ def _process_single_smiles(
 
     with open(output_name, "w") as fileobj:
         json.dump(
-            finder.routes.dict_with_extra(include_metadata=True, include_scores=True),
+            finder.routes.dict_with_extra(include_metadata=True,
+                                          include_scores=True),
             fileobj,
             indent=2,
         )
@@ -221,13 +224,13 @@ def _process_single_smiles(
 
     stats = finder.extract_statistics()
     if do_clustering:
-        _do_clustering(
-            finder, stats, detailed_results=False, model_path=route_distance_model
-        )
+        _do_clustering(finder,
+                       stats,
+                       detailed_results=False,
+                       model_path=route_distance_model)
     _do_post_processing(finder, stats, post_processing)
-    stats_str = "\n".join(
-        f"{key.replace('_', ' ')}: {value}" for key, value in stats.items()
-    )
+    stats_str = "\n".join(f"{key.replace('_', ' ')}: {value}"
+                          for key, value in stats.items())
     logger().info(stats_str)
 
 
@@ -248,7 +251,8 @@ def _process_multi_smiles(
     checkpoint_data: StrDict = defaultdict(list)
     if checkpoint:
         checkpoint_data = _load_checkpoint(checkpoint)
-        start = len(checkpoint_data["processed_smiles"]) if checkpoint_data else 0
+        start = len(
+            checkpoint_data["processed_smiles"]) if checkpoint_data else 0
         smiles = smiles[start:]
 
     results: StrDict = defaultdict(list)
@@ -266,7 +270,9 @@ def _process_multi_smiles(
         try:
             finder.prepare_tree()
         except ValueError as err:
-            print(f"Failed to setup search for {smi} due to: '{str(err).lower()}'")
+            print(
+                f"Failed to setup search for {smi} due to: '{str(err).lower()}'"
+            )
             continue
         search_time = finder.tree_search()
         finder.build_routes()
@@ -274,29 +280,30 @@ def _process_multi_smiles(
         stats = finder.extract_statistics()
 
         solved_str = "is solved" if stats["is_solved"] else "is not solved"
-        logger().info(f"Done with {smi} in {search_time:.3} s and {solved_str}")
+        logger().info(
+            f"Done with {smi} in {search_time:.3} s and {solved_str}")
         if do_clustering:
-            _do_clustering(
-                finder, stats, detailed_results=True, model_path=route_distance_model
-            )
+            _do_clustering(finder,
+                           stats,
+                           detailed_results=True,
+                           model_path=route_distance_model)
         _do_post_processing(finder, stats, post_processing)
 
         for key, value in stats.items():
             processed_results[key] = value
         processed_results["stock_info"] = finder.stock_info()
         processed_results["trees"] = finder.routes.dict_with_extra(
-            include_metadata=True, include_scores=True
-        )
+            include_metadata=True, include_scores=True)
 
         if checkpoint:
             with open(checkpoint, "a") as checkpoint_file:
                 checkpoint_file.write(
-                    json.dumps({"processed_smiles": smi, "results": processed_results})
-                    + "\n"
-                )
+                    json.dumps({
+                        "processed_smiles": smi,
+                        "results": processed_results
+                    }) + "\n")
             logger().debug(
-                f"Results for processed smiles '{smi}' saved to {checkpoint}"
-            )
+                f"Results for processed smiles '{smi}' saved to {checkpoint}")
 
         for key, value in processed_results.items():
             results[key].append(value)
@@ -307,6 +314,7 @@ def _process_multi_smiles(
 
 
 def _multiprocess_smiles(args: argparse.Namespace) -> None:
+
     def create_cmd(index, filename):
         cmd_args = [
             "aizynthcli",
@@ -327,7 +335,8 @@ def _multiprocess_smiles(args: argparse.Namespace) -> None:
         if args.cluster:
             cmd_args.append("--cluster")
         if args.route_distance_model:
-            cmd_args.extend(["--route_distance_model", args.route_distance_model])
+            cmd_args.extend(
+                ["--route_distance_model", args.route_distance_model])
         if args.post_processing:
             cmd_args.extend(["--post_processing"] + args.post_processing)
         return cmd_args
@@ -339,7 +348,9 @@ def _multiprocess_smiles(args: argparse.Namespace) -> None:
 
     setup_logger(logging.INFO)
     filenames = split_file(args.smiles, args.nproc)
-    json_files = [tempfile.mktemp(suffix=".json.gz") for _ in range(args.nproc)]
+    json_files = [
+        tempfile.mktemp(suffix=".json.gz") for _ in range(args.nproc)
+    ]
     start_processes(filenames, "aizynthcli", create_cmd)
 
     if not all(os.path.exists(filename) for filename in json_files):
@@ -353,7 +364,7 @@ def main() -> None:
     """Entry point for the aizynthcli command"""
     args = _get_arguments()
 
-    file_level_logging = logging.DEBUG if args.log_to_file else None
+    file_level_logging = logging.INFO if args.log_to_file else None
     setup_logger(logging.INFO, file_level_logging)
 
     if not os.path.exists(args.smiles):
@@ -362,8 +373,7 @@ def main() -> None:
             logger().error(
                 f"The --smiles argument ({args.smiles})"
                 " does not point to an existing file or is a valid RDKit SMILES."
-                " Cannot start retrosynthesis planning."
-            )
+                " Cannot start retrosynthesis planning.")
             return
 
     if args.nproc:
@@ -376,7 +386,8 @@ def main() -> None:
     _select_stocks(finder, args)
     post_processing = _load_postprocessing_jobs(args.post_processing)
     pre_processing = _load_preprocessing_job(args.pre_processing)
-    finder.expansion_policy.select(args.policy or finder.expansion_policy.items[0])
+    finder.expansion_policy.select(args.policy
+                                   or finder.expansion_policy.items[0])
     if args.filter:
         finder.filter_policy.select(args.filter)
     else:

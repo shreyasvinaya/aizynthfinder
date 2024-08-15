@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from aizynthfinder.context.config import Configuration
     from aizynthfinder.utils.type_utils import List, Optional, Sequence, Union
 
-
 _MODE2NODECLASS = {
     "single-objective": MctsNode,
     "weighted-sum": MctsNode,
@@ -35,9 +34,9 @@ class MctsSearchTree:
     :param root_smiles: the root will be set to a node representing this molecule, defaults to None
     """
 
-    def __init__(
-        self, config: Configuration, root_smiles: Optional[str] = None
-    ) -> None:
+    def __init__(self,
+                 config: Configuration,
+                 root_smiles: Optional[str] = None) -> None:
         self._logger = logger()
         self.profiling = {
             "expansion_calls": 0,
@@ -49,9 +48,10 @@ class MctsSearchTree:
         self._logger.debug(f"MCTS mode: {self.mode}")
 
         if root_smiles:
-            self.root: Optional[MctsNode] = _MODE2NODECLASS[self.mode].create_root(
-                smiles=root_smiles, tree=self, config=config
-            )
+            self.root: Optional[MctsNode] = _MODE2NODECLASS[
+                self.mode].create_root(smiles=root_smiles,
+                                       tree=self,
+                                       config=config)
         else:
             self.root = None
 
@@ -63,15 +63,17 @@ class MctsSearchTree:
                 config.search.algorithm_config["search_reward"]
             ]
         config_rewards = config.search.algorithm_config["search_rewards"]
-        self._logger.setLevel(logging.WARNING)  # Supress logging from `make_subset`
+        self._logger.setLevel(
+            logging.WARNING)  # Supress logging from `make_subset`
         self._logger.debug(f"Selecting reward scorers: {config_rewards}")
         self.reward_scorer = self.config.scorers.make_subset(config_rewards)
-        self._logger.setLevel(logging.DEBUG)
+        self._logger.setLevel(logging.INFO)
         if self.mode == "single-objective":
             self.reward_scorer_name = config_rewards[0]
 
     @classmethod
-    def from_json(cls, filename: str, config: Configuration) -> "MctsSearchTree":
+    def from_json(cls, filename: str,
+                  config: Configuration) -> "MctsSearchTree":
         """
         Create a new search tree by deserialization from a JSON file
 
@@ -84,8 +86,7 @@ class MctsSearchTree:
             dict_ = json.load(fileobj)
         mol_deser = MoleculeDeserializer(dict_["molecules"])
         tree.root = _MODE2NODECLASS[tree.mode].from_dict(
-            dict_["tree"], tree, config, mol_deser
-        )
+            dict_["tree"], tree, config, mol_deser)
         return tree
 
     def backpropagate(self, from_node: MctsNode) -> None:
@@ -123,8 +124,8 @@ class MctsSearchTree:
             return self.reward_scorer.score_vector(node)
 
         return self.reward_scorer.weighted_score(
-            node, self.config.search.algorithm_config["search_rewards_weights"]
-        )
+            node,
+            self.config.search.algorithm_config["search_rewards_weights"])
 
     def graph(self, recreate: bool = False) -> nx.DiGraph:
         """
@@ -142,7 +143,9 @@ class MctsSearchTree:
             return self._graph
 
         def add_node(node):
-            self._graph.add_edge(node.parent, node, action=node.parent[node]["action"])
+            self._graph.add_edge(node.parent,
+                                 node,
+                                 action=node.parent[node]["action"])
             for grandchild in node.children:
                 add_node(grandchild)
 
@@ -210,7 +213,10 @@ class MctsSearchTree:
             raise ValueError("Root of search tree is not defined ")
 
         mol_ser = MoleculeSerializer()
-        dict_ = {"tree": self.root.serialize(mol_ser), "molecules": mol_ser.store}
+        dict_ = {
+            "tree": self.root.serialize(mol_ser),
+            "molecules": mol_ser.store
+        }
         with open(filename, "w") as fileobj:
             json.dump(dict_, fileobj, indent=2)
 
@@ -219,7 +225,8 @@ class MctsSearchTree:
         # if only one objective is specified, search will in be in multi objective mode,
         #  but it is simply a vectoried version of single objective mode
         nrewards = len(self.config.search.algorithm_config["search_rewards"])
-        nweights = len(self.config.search.algorithm_config["search_rewards_weights"])
+        nweights = len(
+            self.config.search.algorithm_config["search_rewards_weights"])
 
         if nrewards == 1:
             mode = "single-objective"
