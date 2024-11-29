@@ -146,3 +146,7 @@ config_local.yml
 devtools/seldon-output-*/
 
 models/
+zinc_stock.hdf5
+*.hdf5
+*.onnx
+uspto_
