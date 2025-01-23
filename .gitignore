@@ -150,3 +150,9 @@ zinc_stock.hdf5
 *.hdf5
 *.onnx
 uspto_
+
+out/
+mol_list_MB.txt
+mol.txt
+output.json
+runner.sh
